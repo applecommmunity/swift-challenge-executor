@@ -1,0 +1,37 @@
+name: Swift Solution Validator
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: "0 * * * *" # Runs every hour (adjust as needed)
+  workflow_dispatch: # Allows manual execution
+
+jobs:
+  validate-solutions:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set Up Swift
+        uses: swift-actions/setup-swift@v1
+        with:
+          swift-version: '5.8' # Use the latest Swift version
+
+      - name: Download Solutions from Google Drive
+        run: python scripts/download_solutions.py
+        env:
+          GOOGLE_DRIVE_API_KEY: ${{ secrets.GOOGLE_DRIVE_API_KEY }}
+
+      - name: Run Swift Test Cases
+        run: |
+          swift test
+
+      - name: Update Google Sheets with Results
+        run: python scripts/update_leaderboard.py
+        env:
+          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+          GOOGLE_SHEET_API_KEY: ${{ secrets.GOOGLE_SHEET_API_KEY }}
